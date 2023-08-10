@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 // Authentication middleware
-export function authenticateToken(req: Request, res: Response, next: NextFunction) {
+function authenticateToken(req: Request, res: Response, next: NextFunction) : Response | undefined{
   const authHeader = req.headers['authorization'];
   // console.log(req.headers);
   const token = authHeader && authHeader.split(' ')[1];
@@ -10,13 +10,11 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
   }
 
   const secretKey = process.env.ACCESS_TOKEN_SECRET; // Access the environment variable
-  // const payload = { userId: 123 };
-
+  
   if (!secretKey) {
     throw new Error('Secret key not found in environment variables');
   }
 
-  
   jwt.verify(token, secretKey, (error: jwt.VerifyErrors | null, decoded: jwt.JwtPayload| string | undefined) => {
     if (error) {
       return res.status(403).json({ success: false, message: 'Invalid token' });

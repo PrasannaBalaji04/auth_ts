@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const db_1 = __importDefault(require("./config/db"));
-const employeeRoutes_1 = __importDefault(require("./routes/employeeRoutes"));
+const db_1 = __importDefault(require("./dest/config/db"));
+const employeeRoutes_1 = __importDefault(require("./dest/routes/employeeRoutes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: true,

@@ -3,14 +3,14 @@ import validator from 'validator';
 // const passwordValidator = require('password-validator');
 import passwordValidator from 'password-validator';
 
-export function validateEmail(email: string) {
+export function validateEmail(email: string) : boolean{
   if (!validator.isEmail(email)) {
     return false;
   }
   return true;
 }
 
-export function validatePassword(password:string) {
+export function validatePassword(password:string) : boolean | string[]{
   const schema = new passwordValidator();
   schema
     .is().min(8) // Minimum length 8

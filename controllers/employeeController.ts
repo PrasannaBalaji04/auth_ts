@@ -3,6 +3,7 @@ import {Request,Response} from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {validateEmail, validatePassword} from '../services/validators';
+import { log } from 'console';
 
 async function signUp(req: Request, res: Response){
     try{
@@ -16,13 +17,14 @@ async function signUp(req: Request, res: Response){
           } = req.body;
           const date= Date.parse(DoB);
           const dateObject = new Date(date);
-          console.log(DoB+" "+dateObject);
           if (!validateEmail(email)) {
                   console.log("email not valid");
                   return res.status(400).json({ error: 'Invalid email address' });
                 }
           
             const passwordErrors = validatePassword(password);
+            // console.log(passwordErrors);
+            
             if (Array.isArray(passwordErrors)) {
                 // Now TypeScript knows value is an array
                 if (passwordErrors.length > 0) {
@@ -73,9 +75,9 @@ async function login(req: Request ,res: Response) {
       // Find the employee by email
       const employee = await Employee.findOne({ email });
       if (!employee) {
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
-  
+      
       // Validate the password
       const isPasswordValid = await bcrypt.compare(password, employee.password.toString());
       if (!isPasswordValid) {
@@ -88,14 +90,17 @@ async function login(req: Request ,res: Response) {
       // Generate a JWT token
       const token = jwt.sign({ id: employee._id }, secretKey, { expiresIn: '1h' });
       const refreshToken = jwt.sign({id : employee._id}, process.env.REFRESH_TOKEN_SECRET!, {expiresIn: '1D'});
-  
+      
       const updateOperation = {
         $set: {
-              token: token,
-            },
+          token: token,
+        },
       };
-  
+      
       const result = await Employee.updateOne({_id: employee._id}, updateOperation);
+      // console.log(employee);
+      
+      
       res.cookie('jwt', refreshToken, { httpOnly: true, 
         maxAge: 24 * 60 * 60 * 1000 });
       res.json({ success: true, token });
@@ -111,13 +116,11 @@ async function login(req: Request ,res: Response) {
 
 // Refresh token
 async function refresh(req: Request, res: Response){
-  // console.log("Hi");
 
   if (req.cookies?.jwt) {
 
     // Destructuring refreshToken from cookie
     const refreshToken = req.cookies.jwt;
-    // console.log(refreshToken);
 
     // Verifying refresh token
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!, 
