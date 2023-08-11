@@ -3,9 +3,8 @@ import {Request,Response} from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {validateEmail, validatePassword} from '../services/validators';
-import { log } from 'console';
 
-async function signUp(req: Request, res: Response){
+async function signUp(req: Request, res: Response):Promise<void>{
     try{
         const { name, email, password, DoB, token, mobile }: {
             name: string;
@@ -19,19 +18,17 @@ async function signUp(req: Request, res: Response){
           const dateObject = new Date(date);
           if (!validateEmail(email)) {
                   console.log("email not valid");
-                  return res.status(400).json({ error: 'Invalid email address' });
+                  res.status(400).json({ error: 'Invalid email address' });
                 }
           
             const passwordErrors = validatePassword(password);
-            // console.log(passwordErrors);
             
             if (Array.isArray(passwordErrors)) {
                 // Now TypeScript knows value is an array
                 if (passwordErrors.length > 0) {
                     console.log("password not valid");
-                    return res.status(400).json({ error: 'Invalid password', passwordErrors });
+                    res.status(400).json({ error: 'Invalid password', passwordErrors });
                     }
-                    // console.log(`Array length: ${passwordErrors.length}`);
                 } else {
                     console.log('Value is not an array');
                 }
@@ -39,7 +36,7 @@ async function signUp(req: Request, res: Response){
                 // Check if the email is already registered
             const existingUser = await Employee.findOne({ email });
             if (existingUser) {
-            return res.status(409).json({ success: false, message: 'Email already registered' });
+            res.status(409).json({ success: false, message: 'Email already registered' });
             }
 
             // Encrypt the password
@@ -58,7 +55,6 @@ async function signUp(req: Request, res: Response){
     }
     catch(error){
 
-    // console.log("err");
     if (error instanceof Error) {
         console.error('An error occurred:', error.message);
         res.status(500).json({ success: false, error: error.message });
@@ -69,41 +65,41 @@ async function signUp(req: Request, res: Response){
 }
 
 // // Log in a user and generate a JWT token
-async function login(req: Request ,res: Response) {
+async function login(req: Request ,res: Response) :Promise<void>{
     try {
       const { email, password } = req.body;
       // Find the employee by email
       const employee = await Employee.findOne({ email });
       if (!employee) {
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
-      
-      // Validate the password
-      const isPasswordValid = await bcrypt.compare(password, employee.password.toString());
-      if (!isPasswordValid) {
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      else{
+        // Validate the password
+        const isPasswordValid = await bcrypt.compare(password, employee.password.toString());
+        if (!isPasswordValid) {
+          res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+        const secretKey = process.env.ACCESS_TOKEN_SECRET;
+        if (!secretKey) {
+          throw new Error('Secret key not found in environment variables');
+        }
+        // Generate a JWT token
+        const token = jwt.sign({ id: employee._id }, secretKey, { expiresIn: '1h' });
+        const refreshToken = jwt.sign({id : employee._id}, process.env.REFRESH_TOKEN_SECRET!, {expiresIn: '1D'});
+        
+        const updateOperation = {
+          $set: {
+            token: token,
+          },
+        };
+        
+        const result = await Employee.updateOne({_id: employee._id}, updateOperation);
+        
+        
+        res.cookie('jwt', refreshToken, { httpOnly: true, 
+          maxAge: 24 * 60 * 60 * 1000 });
+        res.json({ success: true, token });
       }
-      const secretKey = process.env.ACCESS_TOKEN_SECRET;
-      if (!secretKey) {
-        throw new Error('Secret key not found in environment variables');
-      }
-      // Generate a JWT token
-      const token = jwt.sign({ id: employee._id }, secretKey, { expiresIn: '1h' });
-      const refreshToken = jwt.sign({id : employee._id}, process.env.REFRESH_TOKEN_SECRET!, {expiresIn: '1D'});
-      
-      const updateOperation = {
-        $set: {
-          token: token,
-        },
-      };
-      
-      const result = await Employee.updateOne({_id: employee._id}, updateOperation);
-      // console.log(employee);
-      
-      
-      res.cookie('jwt', refreshToken, { httpOnly: true, 
-        maxAge: 24 * 60 * 60 * 1000 });
-      res.json({ success: true, token });
     } catch(error){
       if (error instanceof Error) {
         console.error('An error occurred:', error.message);
@@ -115,7 +111,7 @@ async function login(req: Request ,res: Response) {
 }
 
 // Refresh token
-async function refresh(req: Request, res: Response){
+async function refresh(req: Request, res: Response): Promise<void>{
 
   if (req.cookies?.jwt) {
 
@@ -139,7 +135,7 @@ async function refresh(req: Request, res: Response){
         }
     })
     } else {
-        return res.status(406).json({ message: 'Unauthorized' });
+        res.status(406).json({ message: 'Unauthorized' });
     }
 }
            

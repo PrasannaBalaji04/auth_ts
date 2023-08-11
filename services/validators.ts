@@ -1,6 +1,5 @@
 import validator from 'validator';
 
-// const passwordValidator = require('password-validator');
 import passwordValidator from 'password-validator';
 
 export function validateEmail(email: string) : boolean{
