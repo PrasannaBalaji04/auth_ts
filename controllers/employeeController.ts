@@ -19,7 +19,7 @@ async function signUp(req: Request, res: Response):Promise<void>{
           if (!validateEmail(email)) {
                   console.log("email not valid");
                   res.status(400).json({ error: 'Invalid email address' });
-                }
+            }
           
             const passwordErrors = validatePassword(password);
             
@@ -38,20 +38,21 @@ async function signUp(req: Request, res: Response):Promise<void>{
             if (existingUser) {
             res.status(409).json({ success: false, message: 'Email already registered' });
             }
-
-            // Encrypt the password
-            const hashedPassword = await bcrypt.hash(password, 10);
-            // Create a new employee with the encrypted password
-            const employee = await Employee.create({
-            name,
-            email,
-            password : hashedPassword,
-            DoB: dateObject,
-            token,
-            mobile
-            });
-
-            res.status(201).json({ success: true, message: 'User created successfully' });
+            else{
+              // Encrypt the password
+              const hashedPassword = await bcrypt.hash(password, 10);
+              // Create a new employee with the encrypted password
+              const employee = await Employee.create({
+              name,
+              email,
+              password : hashedPassword,
+              DoB: dateObject,
+              token,
+              mobile
+              });
+  
+              res.status(201).json({ success: true, message: 'User created successfully' });
+            }
     }
     catch(error){
 
@@ -84,21 +85,21 @@ async function login(req: Request ,res: Response) :Promise<void>{
           throw new Error('Secret key not found in environment variables');
         }
         // Generate a JWT token
-        const token = jwt.sign({ id: employee._id }, secretKey, { expiresIn: '1h' });
-        const refreshToken = jwt.sign({id : employee._id}, process.env.REFRESH_TOKEN_SECRET!, {expiresIn: '1D'});
-        
-        const updateOperation = {
-          $set: {
-            token: token,
-          },
-        };
-        
-        const result = await Employee.updateOne({_id: employee._id}, updateOperation);
-        
-        
-        res.cookie('jwt', refreshToken, { httpOnly: true, 
-          maxAge: 24 * 60 * 60 * 1000 });
-        res.json({ success: true, token });
+        else{
+          const token = jwt.sign({ id: employee._id }, secretKey, { expiresIn: '1h' });
+          const refreshToken = jwt.sign({id : employee._id}, process.env.REFRESH_TOKEN_SECRET!, {expiresIn: '1D'});
+          
+          const updateOperation = {
+            $set: {
+              token: token,
+            },
+          };
+          
+          await Employee.updateOne({_id: employee._id}, updateOperation);
+          res.cookie('jwt', refreshToken, { httpOnly: true, 
+            maxAge: 24 * 60 * 60 * 1000 });
+          res.json({ success: true, token });
+        }
       }
     } catch(error){
       if (error instanceof Error) {
@@ -112,11 +113,12 @@ async function login(req: Request ,res: Response) :Promise<void>{
 
 // Refresh token
 async function refresh(req: Request, res: Response): Promise<void>{
-
+  
   if (req.cookies?.jwt) {
 
     // Destructuring refreshToken from cookie
     const refreshToken = req.cookies.jwt;
+    // console.log(refreshToken);
 
     // Verifying refresh token
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!, 

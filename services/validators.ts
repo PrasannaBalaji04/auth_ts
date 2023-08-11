@@ -21,8 +21,3 @@ export function validatePassword(password:string) : boolean | string[]{
 
   return schema.validate(password, { list: true });
 }
-
-module.exports ={
-  validateEmail,
-  validatePassword
-}
