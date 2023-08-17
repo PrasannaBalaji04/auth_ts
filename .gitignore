@@ -1,6 +1,6 @@
+dist
 node_modules
 .env
 package-lock.json
-dest
 **/.DS_Store
 .DS_Store?
