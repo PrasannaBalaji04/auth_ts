@@ -4,7 +4,7 @@ const employeeSchema = new mongoose.Schema({
     name: {type: String, required: true},
     email: {type: String , required: true},
     password: {type:String, required: true},
-    DoB: {type: Date, required: true},
+    DoB: {type: Date, required: false},
     token:{type: String, required: false},
     mobile: {type: String, required: true}
 });

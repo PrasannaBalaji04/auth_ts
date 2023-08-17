@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {validateEmail, validatePassword} from '../services/validators';
 
-async function signUp(req: Request, res: Response):Promise<void>{
+async function signUp(req: Request, res: Response):Promise<Response|void>{
     try{
         const { name, email, password, DoB, token, mobile }: {
             name: string;
@@ -66,7 +66,7 @@ async function signUp(req: Request, res: Response):Promise<void>{
 }
 
 // // Log in a user and generate a JWT token
-async function login(req: Request ,res: Response) :Promise<void>{
+async function login(req: Request ,res: Response) :Promise<Response|void>{
     try {
       const { email, password } = req.body;
       // Find the employee by email
@@ -112,7 +112,7 @@ async function login(req: Request ,res: Response) :Promise<void>{
 }
 
 // Refresh token
-async function refresh(req: Request, res: Response): Promise<void>{
+async function refresh(req: Request, res: Response): Promise<Response|void>{
   
   if (req.cookies?.jwt) {
 
